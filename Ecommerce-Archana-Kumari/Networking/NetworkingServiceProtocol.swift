@@ -6,3 +6,7 @@
 //
 
 import Foundation
+
+protocol NetworkingServiceProtocol {
+    func fetchProducts(page: Int, limit: Int, category: String, completion: @escaping (Result<ProductResponse, NetworkError>) -> Void)
+}
