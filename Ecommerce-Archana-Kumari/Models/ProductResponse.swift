@@ -6,3 +6,13 @@
 //
 
 import Foundation
+
+struct ProductResponse: Codable {
+    let products: [Product]
+    let nextPage: Int?
+    
+    enum CodingKeys: String, CodingKey {
+        case products
+        case nextPage
+    }
+}
