@@ -15,8 +15,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window = UIWindow(windowScene: windowScene)
 
         // Set the initial root view controller
-        let viewController = ViewController()
-        window?.rootViewController = viewController
+        let productListViewController = ProductListViewController()
+        let navigationController = UINavigationController(rootViewController: productListViewController)
+        window?.rootViewController = navigationController
         window?.makeKeyAndVisible()
     }
 

@@ -32,8 +32,12 @@ class ImageLoader {
     // MARK: - Public Methods
 
     func loadImage(from urlString: String?, completion: @escaping (Result<UIImage, Error>) -> Void) {
-        guard let urlString = urlString, !urlString.isEmpty,
-              let url = URL(string: urlString) else {
+        guard let urlString = urlString, !urlString.isEmpty else {
+            completion(.failure(ImageLoaderError.invalidURL))
+            return
+        }
+        
+        guard let url = URL(string: urlString) else {
             completion(.failure(ImageLoaderError.invalidURL))
             return
         }
@@ -46,6 +50,7 @@ class ImageLoader {
             }
             return
         }
+        
         cancelTask(for: urlString)
         
         let task = session.dataTask(with: url) { [weak self] data, response, error in
@@ -62,14 +67,28 @@ class ImageLoader {
                 return
             }
             
-            guard let httpResponse = response as? HTTPURLResponse,
-                  (200...299).contains(httpResponse.statusCode) else {
+            guard let httpResponse = response as? HTTPURLResponse else {
                 DispatchQueue.main.async {
                     completion(.failure(ImageLoaderError.invalidResponse))
                 }
                 return
             }
-                        guard let data = data, let image = UIImage(data: data) else {
+            
+            guard (200...299).contains(httpResponse.statusCode) else {
+                DispatchQueue.main.async {
+                    completion(.failure(ImageLoaderError.invalidResponse))
+                }
+                return
+            }
+            
+            guard let data = data else {
+                DispatchQueue.main.async {
+                    completion(.failure(ImageLoaderError.invalidImageData))
+                }
+                return
+            }
+            
+            guard let image = UIImage(data: data) else {
                 DispatchQueue.main.async {
                     completion(.failure(ImageLoaderError.invalidImageData))
                 }
