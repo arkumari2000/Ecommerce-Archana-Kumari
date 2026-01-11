@@ -67,7 +67,6 @@ class ProductListViewModel {
         
         // Use nextPage from API response, or increment current page
         let pageToFetch = nextPage ?? (currentPage + 1)
-        print("📄 ViewModel: Fetching next page: \(pageToFetch) (currentPage: \(currentPage), nextPage from API: \(nextPage?.description ?? "nil"))")
         fetchProducts(page: pageToFetch)
     }
     
@@ -111,8 +110,6 @@ class ProductListViewModel {
     }
     
     private func handleSuccess(productResponse: ProductResponse, page: Int) {
-        print("✅ ViewModel: Received \(productResponse.products.count) products, nextPage: \(productResponse.nextPage?.description ?? "nil")")
-        
         currentPage = page
         
         // Determine if there are more pages
@@ -127,7 +124,6 @@ class ProductListViewModel {
                 nextPage = nil
             }
         } else {
-            // API didn't provide nextPage - use heuristics
             if productResponse.products.isEmpty {
                 // Got 0 products, assume we've reached the end
                 hasMorePages = false
@@ -140,12 +136,10 @@ class ProductListViewModel {
                 // Got full page of products but no nextPage - assume there might be more
                 hasMorePages = true
                 nextPage = page + 1
-                print("✅ ViewModel: Got \(productResponse.products.count) products (full page) but no nextPage, will try page \(nextPage ?? -1) next")
             }
         }
         
         products.append(contentsOf: productResponse.products)
-        print("✅ ViewModel: Total products after append: \(products.count)")
         
         delegate?.didUpdateProducts()
         delegate?.didUpdateEmptyState(isEmpty)

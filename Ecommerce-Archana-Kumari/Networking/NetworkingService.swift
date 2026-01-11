@@ -46,13 +46,13 @@ class NetworkingService: NetworkingServiceProtocol {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
         let task = session.dataTask(with: request) { data, response, error in
-
+            
             // Network Error Handling
             if let error = error {
                 let nsError = error as NSError
-                if nsError.code == NSURLErrorNotConnectedToInternet || 
-                   nsError.code == NSURLErrorNetworkConnectionLost ||
-                   nsError.code == NSURLErrorTimedOut {
+                if nsError.code == NSURLErrorNotConnectedToInternet ||
+                    nsError.code == NSURLErrorNetworkConnectionLost ||
+                    nsError.code == NSURLErrorTimedOut {
                     completion(.failure(.noInternetConnection))
                 } else {
                     completion(.failure(.unknown(error)))
@@ -65,7 +65,7 @@ class NetworkingService: NetworkingServiceProtocol {
                 completion(.failure(.invalidResponse))
                 return
             }
-           
+            
             guard (200...299).contains(httpResponse.statusCode) else {
                 completion(.failure(.serverError(httpResponse.statusCode)))
                 return
@@ -77,69 +77,13 @@ class NetworkingService: NetworkingServiceProtocol {
             }
             
             let decoder = JSONDecoder()
-            
-            // Strategy 1: Try to decode as ProductResponse (wrapped format: {products: [], nextPage: ...})
+
             if let productResponse = try? decoder.decode(ProductResponse.self, from: data) {
                 print("✅ Decoded as ProductResponse: \(productResponse.products.count) products, nextPage: \(productResponse.nextPage ?? -1)")
                 completion(.success(productResponse))
                 return
             }
-            
-            // Strategy 2: Try to decode as array directly (direct array format: [{...}, {...}])
-            if let products = try? decoder.decode([Product].self, from: data) {
-                let productResponse = ProductResponse(products: products, nextPage: nil)
-                completion(.success(productResponse))
-                return
-            }
-            
-            // Strategy 3: Try to decode manually with alternative field names
-            do {
-                if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
-                    var productsArray: [Product] = []
-                    var nextPage: Int? = nil
-                    
-                    // Try different keys for products array
-                    let productKeys = ["products", "data", "items", "results"]
-                    for key in productKeys {
-                        if let productsDict = json[key] as? [[String: Any]] {
-                            productsArray = try productsDict.compactMap { dict -> Product? in
-                                let jsonData = try JSONSerialization.data(withJSONObject: dict)
-                                return try decoder.decode(Product.self, from: jsonData)
-                            }
-                            if !productsArray.isEmpty {
-                                break
-                            }
-                        }
-                    }
-                    
-                    // Try different keys for nextPage
-                    let nextPageKeys = ["nextPage", "next_page", "nextPageNumber", "next"]
-                    for key in nextPageKeys {
-                        if let next = json[key] as? Int {
-                            nextPage = next
-                            break
-                        }
-                    }
-                    
-                    if !productsArray.isEmpty {
-                        let productResponse = ProductResponse(products: productsArray, nextPage: nextPage)
-                        completion(.success(productResponse))
-                        return
-                    }
-                }
-            } catch {
-                // Silent fail, try next strategy
-            }
-            
-            // Strategy 4: Final attempt
-            do {
-                let productResponse = try decoder.decode(ProductResponse.self, from: data)
-                completion(.success(productResponse))
-            } catch {
-                completion(.failure(.decodingError(error)))
-            }
         }
-        
         task.resume()
     }
 }

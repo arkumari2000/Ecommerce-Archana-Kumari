@@ -22,9 +22,6 @@ struct Product: Codable {
         case category
         case price
         case image
-        case imageUrl
-        case imageURL
-        case image_url
     }
     
     init(from decoder: Decoder) throws {
@@ -37,12 +34,6 @@ struct Product: Codable {
         
         // Try different image field names
         if let imageValue = try? container.decode(String.self, forKey: .image) {
-            image = imageValue
-        } else if let imageValue = try? container.decode(String.self, forKey: .imageUrl) {
-            image = imageValue
-        } else if let imageValue = try? container.decode(String.self, forKey: .imageURL) {
-            image = imageValue
-        } else if let imageValue = try? container.decode(String.self, forKey: .image_url) {
             image = imageValue
         } else {
             image = nil
